@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.smbms.dao.BillMapper">
+	<resultMap type="Bill" id="billList">
+		<result property="id" column="id" />
+		<result property="billCode" column="billCode" />
+		<result property="productName" column="productName" />
+		<result property="providerName" column="proName" />
+		<result property="isPayment" column="isPayment" />
+		<result property="creationDate" column="creationDate" />
+	</resultMap>
+	<resultMap type="Bill" id="shangji1">
+		<id property="id" column="id" />
+		<result property="billCode" column="billCode" />
+		<result property="productName" column="productName" />
+		<result property="totalPrice" column="totalPrice" />
+		<result property="isPayment" column="isPayment" />
+		<result property="creationDate" column="creationDate" />
+		<association property="provider" javaType="Provider">
+			<id property="id" column="p_id" />
+			<result property="proName" column="proName" />
+		</association>
+	</resultMap>
+	<!-- 查询订单列表 -->
+	<select id="getBillList" resultMap="billList">
+		select b.*,p.proName from
+		smbms_bill b,smbms_provider p
+		where b.productName like CONCAT
+		('%',#{productName},'%')
+		and b.providerId = #{providerId}
+		and
+		b.isPayment = #{isPayment}
+		and b.providerId = p.id
+	</select>
+	<select id="getShangji1" resultMap="shangji1">
+		select b.*,p.id as p_id,p.proName from smbms_bill b,smbms_provider p
+		<where>
+			<if test="productName!=null and productName!=''">
+				and productName like concat('%',#{productName},'%')
+			</if>
+			<if test="providerId!=null and providerId!=''">
+				and providerId=#{providerId}
+			</if>
+			<if test="isPayment!=null and isPayment!=''">
+				and isPayment=#{isPayment}
+			</if>
+			and b.`providerId`=p.`id`
+		</where>
+	</select>
+	<select id="getShangji2" resultType="Provider">
+		SELECT * FROM smbms_provider
+		<where>
+			<if test="proCode!=null and proCode!=''">
+				and proCode like concat('%',#{proCode},'%')
+			</if>
+			<if test="proName!=null and proName!=''">
+				and proName like concat('%',#{proName},'%')
+			</if>
+		</where>
+	</select>
+	<update id="modify" parameterType="Provider">
+		update smbms_provider
+		<trim prefix="set" suffixOverrides="," suffix="where id = #{id}">
+			<if test="proCode != null">proCode=#{proCode},</if>
+			<if test="proName != null">proName=#{proName},</if>
+			<if test="proDesc != null">proDesc=#{proDesc},</if>
+			<if test="proContact != null">proContact=#{proContact},</if>
+			<if test="proPhone != null">proPhone=#{proPhone},</if>
+			<if test="proAddress != null">proAddress=#{proAddress},</if>
+			<if test="proFax != null">proFax=#{proFax},</if>
+			<if test="modifyBy != null">modifyBy=#{modifyBy},</if>
+			<if test="modifyDate != null">modifyDate=#{modifyDate},</if>
+		</trim>
+	</update>
+	<!-- 根据供应商列表，获取该供应商列表下订单列表信息-foreach_list -->
+	<select id="getShangji5" resultType="Provider">
+		select * from smbms_provider where id in
+		<foreach collection="array" item="id" open="(" separator=","
+			close=")">
+			#{id}
+		</foreach>
+	</select>
+	<select id="getShangji7" resultType="Provider">
+		select * from smbms_provider where
+		<choose>
+			<when test="proCode!=null and proCode!=''">
+				proCode like concat('%',#{proCode},'%')
+			</when>
+			<when test="proName!=null and proName!=''">
+				proName like concat('%',#{proName},'%')
+			</when>
+			<when test="proContact!=null and proContact!=''">
+				proContact like concat('%',#{proContact},'%')
+			</when>
+			<otherwise>
+				creationDate=#{creationDate}
+			</otherwise>
+		</choose>
+	</select>
+</mapper>
